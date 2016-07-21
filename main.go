@@ -5,7 +5,7 @@
 * @Last Modified time: 2016-07-20 23:09:57
  */
 
-package main
+package fleet
 
 import (
 	"encoding/json"
@@ -19,6 +19,8 @@ import (
 	"time"
 
 	"github.com/coreos/etcd/client"
+	"github.com/influxdata/telegraf"
+	"github.com/influxdata/telegraf/plugins/inputs"
 	"golang.org/x/net/context"
 )
 
@@ -32,6 +34,29 @@ type FleetStates struct {
 		Name               string `json:"name"`
 		SystemdLoadState   string `json:"systemdLoadState"`
 	}
+}
+
+// Fleet struct to hold fleet hosts
+type Fleet struct {
+	Hosts []string `toml:"hosts"`
+}
+
+// Description - Method to provide description of plugin
+func (f *Fleet) Description() string {
+	return "Fleetd Plugin to glather information about container states in fleet cluster"
+}
+
+// SampleConfig output sample config for this plugin
+func (*CouchDB) SampleConfig() string {
+	return `
+  ## Works with Fleet HTTP API
+  ## Multiple Hosts from which to read Fleet stats:
+  hosts = ["http://localhost:49153/fleet/v1/state"]
+`
+}
+
+// Gather method to gather stats for telegraf input
+func (c *CouchDB) Gather(accumulator telegraf.Accumulator) error {
 }
 
 func getInstanceStates(deployment string, params map[string]string) FleetStates {
@@ -107,7 +132,7 @@ func getDeployEnv(fleetHost string) string {
 	return resp.Node.Value
 }
 
-func main() {
+func pseudoMain() {
 	deploymentPtr := flag.String("e", "172.17.0.1", "ETCD Host Address")
 	prettyPrintPtr := flag.Bool("p", false, "Human readble pretty print rather than json output for application")
 	// Once all flags are declared, call `flag.Parse()`
@@ -128,4 +153,10 @@ func main() {
 	} else {
 		fmt.Println(string(jsonCounts))
 	}
+}
+
+func init() {
+	inputs.Add("fleet", func() telegraf.Input {
+		return &Fleet{}
+	})
 }
