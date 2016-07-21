@@ -2,18 +2,24 @@
 * @Author: Jim Weber
 * @Date:   2016-05-18 22:07:31
 * @Last Modified by:   Jim Weber
-* @Last Modified time: 2016-07-20 22:33:59
+* @Last Modified time: 2016-07-20 23:09:57
  */
 
 package main
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
 	"strings"
+	"time"
+
+	"github.com/coreos/etcd/client"
+	"golang.org/x/net/context"
 )
 
 // FleetStates struct to hold all the data for a machine state
@@ -62,22 +68,6 @@ func getInstanceStates(deployment string, params map[string]string) FleetStates 
 	return fleetStates
 }
 
-func filterInstances(fleetStates FleetStates, appName string) []string {
-
-	var instances []string
-	for _, state := range fleetStates.States {
-		if strings.Contains(state.Name, appName) {
-			// exclude any presence or discovery units
-			if strings.Contains(state.Name, "presence") || strings.Contains(state.Name, "discovery") {
-				continue
-			}
-			instances = append(instances, state.Name)
-		}
-	}
-
-	return instances
-}
-
 func getContainerCount(fleetUnits FleetStates) map[string]int {
 	containerCount := make(map[string]int)
 	for _, fleetUnit := range fleetUnits.States {
@@ -89,15 +79,53 @@ func getContainerCount(fleetUnits FleetStates) map[string]int {
 	return containerCount
 }
 
+func getDeployEnv(fleetHost string) string {
+	// fleetURL := "http://172.17.0.1"
+	fleetURL := "http://" + fleetHost
+	cfg := client.Config{
+		Endpoints: []string{fleetURL + ":4001"},
+		Transport: client.DefaultTransport,
+		// set timeout per request to fail fast when the target endpoint is unavailable
+		HeaderTimeoutPerRequest: time.Second,
+	}
+
+	etcdClient, err := client.New(cfg)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// get "/foo" key's value
+	kapi := client.NewKeysAPI(etcdClient)
+	resp, err := kapi.Get(context.Background(), "/deployment", nil)
+	if err != nil {
+		log.Fatal(err)
+	} else {
+		// print value
+		log.Println("deployment envrionment is", resp.Node.Value)
+	}
+
+	return resp.Node.Value
+}
+
 func main() {
-	fleetStates := getInstanceStates("dev", nil)
+	deploymentPtr := flag.String("e", "172.17.0.1", "ETCD Host Address")
+	prettyPrintPtr := flag.Bool("p", false, "Human readble pretty print rather than json output for application")
+	// Once all flags are declared, call `flag.Parse()`
+	// to execute the command-line parsing.
+	flag.Parse()
+
+	environ := getDeployEnv(*deploymentPtr)
+	fleetStates := getInstanceStates(environ, nil)
 	containerCounts := getContainerCount(fleetStates)
 	jsonCounts, err := json.Marshal(containerCounts)
 	if err != nil {
 		fmt.Println(err)
 	}
-	fmt.Println(string(jsonCounts))
-	// for k, v := range containerCounts {
-	// 	fmt.Println(k, ":", v)
-	// }
+	if *prettyPrintPtr == true {
+		for k, v := range containerCounts {
+			fmt.Println(k, ":", v)
+		}
+	} else {
+		fmt.Println(string(jsonCounts))
+	}
 }
