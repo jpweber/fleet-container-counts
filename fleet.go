@@ -145,7 +145,9 @@ func getContainerCount(fleetUnits FleetStates) map[string]int {
 	for _, fleetUnit := range fleetUnits.States {
 		shortNameParts := strings.Split(fleetUnit.Name, "@")
 		shortName := shortNameParts[0]
-		containerCount[shortName]++
+		if fleetUnit.SystemdSubState == "running" {
+			containerCount[shortName]++
+		}
 	}
 
 	return containerCount
