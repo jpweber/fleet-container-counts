@@ -16,8 +16,8 @@ import (
 	"os"
 	"strings"
 	"sync"
+	"time"
 
-	"github.com/coreos/etcd/client"
 	"github.com/influxdata/telegraf"
 	"github.com/influxdata/telegraf/plugins/inputs"
 )
@@ -84,18 +84,29 @@ func (f *Fleet) Gather(accumulator telegraf.Accumulator) error {
 	return errors.New(strings.Join(errorStrings, "\n"))
 }
 
-func (f *Fleet) fetchAndReturnData(accumulator telegraf.Accumulator, host string) error {
+var tr = &http.Transport{
+	ResponseHeaderTimeout: time.Duration(3 * time.Second),
+}
 
-	response, error := client.Get(host)
+var client = &http.Client{
+	Transport: tr,
+	Timeout:   time.Duration(4 * time.Second),
+}
+
+func (f *Fleet) fetchAndReturnData(accumulator telegraf.Accumulator, host string) error {
+	_, error := client.Get(host)
 	if error != nil {
 		return error
 	}
 
 	fleetStates := getInstanceStates(host, nil)
-	containerStates := getContainerCount(fleetStates)
+	containerCounts := getContainerCount(fleetStates)
+	fields := make(map[string]interface{})
 
-	fields := map[string]interface{}
-	
+	for k, v := range containerCounts {
+		fields[k] = v
+	}
+
 	// create tags for each host if needed
 	tags := map[string]string{
 		"server": host,
