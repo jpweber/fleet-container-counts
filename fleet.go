@@ -105,7 +105,7 @@ func (f *Fleet) fetchAndReturnData(accumulator telegraf.Accumulator, host string
 	tags := make(map[string]string)
 
 	for k, v := range containerCounts {
-		fields["container_count"] = v
+		fields[k] = v
 		tags["container_name"] = k
 	}
 
