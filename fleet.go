@@ -102,15 +102,15 @@ func (f *Fleet) fetchAndReturnData(accumulator telegraf.Accumulator, host string
 	fleetStates := getInstanceStates(host, nil)
 	containerCounts := getContainerCount(fleetStates)
 	fields := make(map[string]interface{})
+	tags := make(map[string]string)
 
 	for k, v := range containerCounts {
-		fields[k] = v
+		fields["container_count"] = v
+		tags["container_name"] = k
 	}
 
 	// create tags for each host if needed
-	tags := map[string]string{
-		"server": host,
-	}
+	tags["server"] = host
 
 	accumulator.AddFields("fleet", fields, tags)
 	return nil
