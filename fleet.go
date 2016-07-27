@@ -1,8 +1,8 @@
 /*
 * @Author: Jim Weber
 * @Date:   2016-05-18 22:07:31
-* @Last Modified by:   Jim Weber
-* @Last Modified time: 2016-07-20 23:09:57
+* @Last Modified by:   James Weber
+* @Last Modified time: 2016-07-27 19:17:09
  */
 
 package fleet
@@ -47,9 +47,11 @@ func (f *Fleet) Description() string {
 // SampleConfig output sample config for this plugin
 func (*Fleet) SampleConfig() string {
 	return `
-  ## Works with Fleet HTTP API
-  ## Multiple Hosts from which to read Fleet stats:
-  host = ["http://localhost:49153/fleet/v1/state"]
+# Description
+[[inputs.fleet]]
+## Works with Fleet HTTP API
+## Multiple Hosts from which to read Fleet stats:
+	host = ["http://localhost:49153/fleet/v1/state"]
 `
 }
 
