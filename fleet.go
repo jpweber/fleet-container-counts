@@ -1,8 +1,8 @@
 /*
 * @Author: Jim Weber
 * @Date:   2016-05-18 22:07:31
-* @Last Modified by:   James Weber
-* @Last Modified time: 2016-07-27 19:17:09
+* @Last Modified by:   Jim Weber
+* @Last Modified time: 2016-08-07 20:20:26
  */
 
 package fleet
@@ -108,7 +108,6 @@ func (f *Fleet) fetchAndReturnData(accumulator telegraf.Accumulator, host string
 
 	for k, v := range containerCounts {
 		fields[k] = v
-		tags["container_name"] = k
 	}
 
 	// create tags for each host if needed

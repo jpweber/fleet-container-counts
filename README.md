@@ -26,13 +26,12 @@ For example if you had a unit named ```nginx-1.10.1@35``` the field name would b
 ### Tags:
 
 - All measurements have the following tags:
-    - container_name (unit or container name found running in fleet cluster)
-    - server (name of the fleet node this unit or container resides on)
+    - server (name of the host/container telegraf is running on)
 
 ### Example Output:
 
 ```
 $ ./telegraf -config telegraf.conf -input-filter example -test
-measurement1,tag1=foo,tag2=bar field1=1i,field2=2.1 1453831884664956455
-measurement2,tag1=foo,tag2=bar,tag3=baz field3=1i 1453831884664956455
+* Plugin: fleet, Collection 1
+> fleet,host=localhost.local,server=http://fleet.testserver.com:49153/fleet/v1/state some-api=2i,test-application=1i,webapp=1i,nginx=2i,redis=1i 1470615664000000000
 ```
